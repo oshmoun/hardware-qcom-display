@@ -28,6 +28,7 @@
  */
 
 #include <media/msm_media_info.h>
+#include <cutils/properties.h>
 #include <algorithm>
 
 #include "gr_adreno_info.h"
@@ -529,6 +530,9 @@ bool IsUBwcSupported(int format) {
 }
 
 bool IsUBwcEnabled(int format, uint64_t usage) {
+  // Property is used to check whether the video encoder supports UBWC
+  char property[PROPERTY_VALUE_MAX];
+
   // Allow UBWC, if client is using an explicitly defined UBWC pixel format.
   if (IsUBwcFormat(format)) {
     return true;
@@ -544,6 +548,12 @@ bool IsUBwcEnabled(int format, uint64_t usage) {
       if (AdrenoMemInfo::GetInstance()) {
         enable = AdrenoMemInfo::GetInstance()->IsUBWCSupportedByGPU(format);
       }
+    }
+
+    // Check if client is video encoder, and UBWC is disabled by a prop
+    if ((usage & BufferUsage::VIDEO_ENCODER) &&
+        (property_get("video.disable.ubwc", property, "0") > 0)) {
+      enable = atoi(property) == 0;
     }
 
     // Allow UBWC, only if CPU usage flags are not set
