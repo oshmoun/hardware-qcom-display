@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -40,6 +40,7 @@ enum {
   CACHE_CLEAN = 0x1,
   CACHE_INVALIDATE,
   CACHE_CLEAN_AND_INVALIDATE,
+  CACHE_READ_DONE
 };
 
 struct AllocData {
@@ -68,10 +69,12 @@ class IonAlloc {
   int MapBuffer(void **base, unsigned int size, unsigned int offset, int fd);
   int ImportBuffer(int fd);
   int UnmapBuffer(void *base, unsigned int size, unsigned int offset);
-  int CleanBuffer(void *base, unsigned int size, unsigned int offset, int handle, int op);
+  int CleanBuffer(void *base, unsigned int size, unsigned int offset, int handle, int op, int fd);
 
  private:
+#ifndef TARGET_ION_ABI_VERSION
   const char *kIonDevice = "/dev/ion";
+#endif
 
   int OpenIonDevice();
   void CloseIonDevice();
@@ -79,6 +82,6 @@ class IonAlloc {
   int ion_dev_fd_;
 };
 
-}  // namespace gralloc1
+}  // namespace gralloc
 
 #endif  // __GR_ION_ALLOC_H__
