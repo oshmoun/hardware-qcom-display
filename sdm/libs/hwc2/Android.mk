@@ -18,7 +18,7 @@ LOCAL_CFLAGS                  := -Wno-missing-field-initializers -Wno-unused-par
 LOCAL_CLANG                   := true
 
 LOCAL_SHARED_LIBRARIES        := libsdmcore libqservice libbinder libhardware libhardware_legacy \
-                                 libutils libcutils libsync libqdutils libqdMetaData \
+                                 libutils libcutils libsync \
                                  libdisplaydebug libsdmutils libc++ liblog libgrallocutils libui \
                                  libgpu_tonemapper libhidlbase libhidltransport \
                                  vendor.display.config@1.0 \
@@ -99,8 +99,18 @@ LOCAL_SRC_FILES               := hwc_session.cpp \
                                  cpuhint.cpp \
                                  hwc_tonemapper.cpp \
                                  display_null.cpp \
-                                 hwc_socket_handler.cpp \
-                                 hwc_buffer_allocator.cpp
+                                 hwc_socket_handler.cpp
+
+ifeq ($(TARGET_USES_GRALLOC1), true)
+LOCAL_HEADER_LIBRARIES += display_intf_headers_gralloc1
+LOCAL_SHARED_LIBRARIES += libqdutils.legacy libqdMetaData.legacy
+LOCAL_SRC_FILES               += hwc_buffer_allocator1.cpp
+LOCAL_CFLAGS += -DUSE_GRALLOC1
+else
+LOCAL_HEADER_LIBRARIES += display_intf_headers_gralloc
+LOCAL_SHARED_LIBRARIES += libqdutils libqdMetaData
+LOCAL_SRC_FILES               += hwc_buffer_allocator.cpp
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 endif
