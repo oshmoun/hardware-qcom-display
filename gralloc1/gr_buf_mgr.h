@@ -28,9 +28,12 @@
 
 #include "gralloc_priv.h"
 #include "gr_allocator.h"
+#include "gr_utils.h"
 #include "gr_buf_descriptor.h"
 
 namespace gralloc {
+
+using android::hardware::graphics::mapper::V2_0::Error;
 
 class BufferManager {
  public:
@@ -49,6 +52,10 @@ class BufferManager {
   gralloc1_error_t GetFlexLayout(const private_handle_t *hnd, struct android_flex_layout *layout);
   gralloc1_error_t GetNumFlexPlanes(const private_handle_t *hnd, uint32_t *out_num_planes);
   gralloc1_error_t Dump(std::ostringstream *os);
+  int AllocateBuffer(const BufferDescriptor &descriptor, buffer_handle_t *handle,
+                     unsigned int bufferSize = 0);
+  Error IsBufferImported(const private_handle_t *hnd);
+  Error ValidateBufferSize(private_handle_t const *hnd, BufferInfo info);
 
   template <typename... Args>
   gralloc1_error_t CallBufferDescriptorFunction(gralloc1_buffer_descriptor_t descriptor_id,
@@ -73,8 +80,6 @@ class BufferManager {
   BufferManager();
   gralloc1_error_t MapBuffer(private_handle_t const *hnd);
   int GetBufferType(int format);
-  int AllocateBuffer(const BufferDescriptor &descriptor, buffer_handle_t *handle,
-                     unsigned int bufferSize = 0);
   uint32_t GetDataAlignment(int format, gralloc1_producer_usage_t prod_usage,
                        gralloc1_consumer_usage_t cons_usage);
   int GetHandleFlags(int format, gralloc1_producer_usage_t prod_usage,

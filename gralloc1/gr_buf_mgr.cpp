@@ -219,6 +219,17 @@ gralloc1_error_t BufferManager::FreeBuffer(std::shared_ptr<Buffer> buf) {
   return GRALLOC1_ERROR_NONE;
 }
 
+Error BufferManager::ValidateBufferSize(private_handle_t const *hnd, BufferInfo info) {
+  unsigned int size, alignedw, alignedh;
+  info.format = allocator_->GetImplDefinedFormat(info.prod_usage, info.cons_usage, info.format);
+  GetBufferSizeAndDimensions(info, &size, &alignedw, &alignedh);
+  auto ion_fd_size = static_cast<unsigned int>(lseek(hnd->fd, 0, SEEK_END));
+  if (size != ion_fd_size) {
+    return Error::BAD_VALUE;
+  }
+  return Error::NONE;
+}
+
 void BufferManager::RegisterHandleLocked(const private_handle_t *hnd,
                                          int ion_handle,
                                          int ion_handle_meta) {
@@ -266,6 +277,15 @@ gralloc1_error_t BufferManager::MapBuffer(private_handle_t const *handle) {
     return GRALLOC1_ERROR_BAD_HANDLE;
   }
   return GRALLOC1_ERROR_NONE;
+}
+
+Error BufferManager::IsBufferImported(const private_handle_t *hnd) {
+  std::lock_guard<std::mutex> lock(buffer_lock_);
+  auto buf = GetBufferFromHandleLocked(hnd);
+  if (buf != nullptr) {
+    return Error::NONE;
+  }
+  return Error::BAD_BUFFER;
 }
 
 gralloc1_error_t BufferManager::RetainBuffer(private_handle_t const *hnd) {

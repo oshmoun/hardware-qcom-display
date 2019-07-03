@@ -30,10 +30,18 @@
 #ifndef __GR_BUF_DESCRIPTOR_H__
 #define __GR_BUF_DESCRIPTOR_H__
 
+#include <android/hardware/graphics/mapper/2.1/IMapper.h>
 #include <hardware/gralloc1.h>
 #include <atomic>
 
 namespace gralloc {
+using android::hardware::graphics::mapper::V2_0::Error;
+using android::hardware::graphics::mapper::V2_1::IMapper;
+using android::hardware::hidl_vec;
+
+const uint32_t kBufferDescriptorSize = 7;
+const uint32_t kMagicVersion = 0x76312E30;  // v1.0
+
 class BufferDescriptor {
  public:
   BufferDescriptor() : id_(next_id_++) {}
@@ -54,6 +62,32 @@ class BufferDescriptor {
         producer_usage_(prod_usage),
         consumer_usage_(cons_usage),
         id_(next_id_++) {}
+
+  static hidl_vec<uint32_t> Encode(const IMapper::BufferDescriptorInfo &bd_info) {
+    hidl_vec<uint32_t> out;
+    out.resize(kBufferDescriptorSize);
+    out[0] = kMagicVersion;
+    out[1] = bd_info.width;
+    out[2] = bd_info.height;
+    out[3] = bd_info.layerCount;
+    out[4] = static_cast<uint32_t>(bd_info.format);
+    out[5] = static_cast<uint32_t>(bd_info.usage);
+    out[6] = static_cast<uint32_t>(bd_info.usage >> 32);
+    return out;
+  }
+
+  Error Decode(const hidl_vec<uint32_t> &in) {
+    if (in.size() != kBufferDescriptorSize || in[0] != kMagicVersion) {
+      return Error::BAD_DESCRIPTOR;
+    }
+    width_ = static_cast<int32_t>(in[1]);
+    height_ = static_cast<int32_t>(in[2]);
+    layer_count_ = in[3];
+    format_ = static_cast<int32_t>(in[4]);
+    producer_usage_ = gralloc1_producer_usage_t(static_cast<int32_t>(in[5]));
+    consumer_usage_ = gralloc1_consumer_usage_t(static_cast<uint64_t>(in[6]) << 32);
+    return Error::NONE;
+  }
 
   void SetConsumerUsage(gralloc1_consumer_usage_t usage) { consumer_usage_ = usage; }
 
